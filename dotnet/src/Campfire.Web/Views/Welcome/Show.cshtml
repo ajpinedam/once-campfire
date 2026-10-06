@@ -1,0 +1,24 @@
+@inherits RazorSlice<PageContext>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@* welcome/show: someone with no rooms yet *@
+<div id="message-area" class="message-area">
+  <div class="message-area--empty min-width center">
+    <figure class="center pad">
+      @ImageTag("messages-empty.svg", new Img(AriaHidden: true, Class: "colorize--black translucent"))
+      <span class="for-screen-reader">@Model.CurrentUser.Name</span>
+    </figure>
+  </div>
+</div>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model, Title: "No rooms yet", BodyClass: "sidebar");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "sidebar")
+        {
+            @Campfire.Web.Features.Sidebar.SidebarFrame.Tag()
+        }
+        return Task.CompletedTask;
+    }
+}

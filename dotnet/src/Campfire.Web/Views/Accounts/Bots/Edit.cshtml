@@ -1,0 +1,40 @@
+@inherits RazorSlice<BotFormModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@{
+    var bot = Model.Bot!;
+}
+<section class="panel" style="view-transition-name: chat-bot-@bot.Id">
+  <form class="flex flex-column gap" enctype="multipart/form-data" action="@Paths.AccountBot(bot.Id)" accept-charset="UTF-8" method="post">
+    @MethodField("patch")@CsrfField(Model.Page.CsrfToken)
+    @(await RenderPartialAsync<Form, BotFormModel>(Model))
+  </form>
+
+  <hr class="separator full-width margin-block-double">
+
+  <div class="flex align-center gap justify-space-between">
+    @ButtonTo(Paths.AccountBot(bot.Id),
+        Raw(ImageTag("trash.svg", new Img(Size: 20, AriaHidden: true)).Value + ImageTag("bot.svg", new Img(Size: 20, AriaHidden: true)).Value),
+        method: "delete", cssClass: "btn txt--small btn--negative", csrfToken: Model.Page.CsrfToken, ariaLabel: "Delete this chat bot",
+        confirm: "Are you sure you want to permanently remove this bot from the account? This can’t be undone.")
+
+    @ButtonTo(Paths.AccountBotKey(bot.Id),
+        Raw(ImageTag("refresh.svg", new Img(Size: 20, AriaHidden: true)).Value + ImageTag("key.svg", new Img(Size: 20, AriaHidden: true)).Value),
+        method: "put", cssClass: "btn full-width txt--small btn--negative", csrfToken: Model.Page.CsrfToken, ariaLabel: "Generate a new key",
+        confirm: "Are you sure you want to change the bot key? All usage of this bot must be updated.")
+  </div>
+</section>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: "Edit bot");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "nav")
+        {
+            <div class="flex-item-justify-start">
+              @LinkBackTo(Paths.AccountBots)
+            </div>
+        }
+        return Task.CompletedTask;
+    }
+}

@@ -1,0 +1,91 @@
+@inherits RazorSlice<RoomShowModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@using Campfire.Web.Turbo
+@{
+    var room = Model.Room;
+    var ctx = Model.Page;
+}
+<div id="message-area" class="message-area" contents data-controller="messages presence drop-target" data-action="@RoomDom.MessageAreaActions" data-messages-first-of-day-class="message--first-of-day" data-messages-formatted-class="message--formatted" data-messages-me-class="message--me" data-messages-mentioned-class="message--mentioned" data-messages-threaded-class="message--threaded" data-messages-page-url-value="@ctx.Url(Paths.RoomMessages(room.Id))">
+  @(await RenderPartialAsync<Campfire.Web.Views.Messages.Template, User>(ctx.CurrentUser))
+
+  <div id="@DomId.For(room, "messages")" class="messages" data-controller="maintain-scroll refresh-room" data-action="@RoomDom.MessagesActions" data-messages-target="messages" data-refresh-room-loaded-at-value="@Epoch(room.UpdatedAt)" data-refresh-room-url-value="@ctx.Url(Paths.RoomRefresh(room.Id))">
+    @if (Model.ShowInvitation)
+    {
+      <div id="system_welcome" class="message message--formatted txt-align-center center">
+        <div class="message__body center">
+          <div class="message__body-content position-relative">
+            @AccountLogoTag(ctx.Account, "center margin-block-end txt-large")
+            <div class="flex align-center gap">
+              <div class="system-welcome--translation">
+                @TranslationButton("invite_message")
+              </div>
+              <p>
+                <strong>Welcome to Campfire</strong><br>
+                To invite people to chat, share the join link below.
+              </p>
+            </div>
+            @(await RenderPartialAsync<Campfire.Web.Views.Shared.Invite, InviteModel>(new InviteModel(ctx)))
+          </div>
+        </div>
+      </div>
+    }
+    @foreach (var fragment in Model.Messages)
+    {
+      WriteLiteral(fragment.AsSpan());
+    }
+  </div>
+
+  @TurboStreamFrom(StreamNames.RoomMessages(room.Id), "RoomMessagesChannel")
+  <button class="message-area__return-to-latest btn" data-action="messages#returnToLatest" data-messages-target="latest" hidden="hidden">
+    @ImageTag("arrow-down.svg", new Img(Size: 20, AriaHidden: true))
+    <span class="for-screen-reader">Jump to newest message</span>
+  </button>
+</div>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: Model.DisplayName, BodyClass: "sidebar");
+
+    protected override async Task ExecuteSectionAsync(string name)
+    {
+        var room = Model.Room;
+        var ctx = Model.Page;
+
+        if (name == "head")
+        {
+            <meta name="turbo-cache-control" content="no-preview">
+            <meta name="current-room-id" content="@room.Id">
+        }
+        else if (name == "nav")
+        {
+            if (ctx.Account?.HasLogo == true)
+            {
+                @AccountLogoTag(ctx.Account)
+            }
+
+            <span class="btn btn--reversed btn--faux room--current">
+              <h1 class="room__contents txt-medium overflow-ellipsis">
+                @if (room.IsDirect)
+                {
+                  <span class="for-screen-reader">Ping with</span>
+                }
+                @Model.DisplayName
+              </h1>
+            </span>
+
+            <a class="btn" style="view-transition-name: edit-room-@room.Id" data-room-id="@room.Id" href="@Paths.EditRoom(room)">
+              @ImageTag("menu-dots-horizontal.svg", new Img(Size: 20, AriaHidden: true))
+              <span class="for-screen-reader">Settings for this @(room.IsDirect ? "Ping" : "room")</span>
+            </a>
+
+            @(await RenderPartialAsync<Campfire.Web.Views.Rooms.Bell, BellModel>(new BellModel(room, Model.PwaHelp)))
+        }
+        else if (name == "sidebar")
+        {
+            @Campfire.Web.Features.Sidebar.SidebarFrame.Tag()
+        }
+        else if (name == "footer")
+        {
+            @(await RenderPartialAsync<Campfire.Web.Views.Rooms.Composer, RoomShowModel>(Model))
+        }
+    }
+}

@@ -1,0 +1,7 @@
+bin/
+obj/
+artifacts/
+App_Data/
+*.user
+.vs/
+TestResults/

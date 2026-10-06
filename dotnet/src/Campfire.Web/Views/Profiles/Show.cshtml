@@ -1,0 +1,141 @@
+@inherits RazorSlice<ProfileModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@using Campfire.Web.Views.Users
+@{
+    var ctx = Model.Page;
+    var user = Model.User;
+}
+<section class="panel flex flex-column gap" style="view-transition-name: avatar-@user.Id">
+  @(await RenderPartialAsync<InstallInstructions, PwaHelpModel>(new(ctx.Platform, ctx.Url(Paths.Root))))
+
+  <div class="align-center center avatar__form gap" data-controller="upload-preview">
+    <form class="txt-medium" data-controller="form" enctype="multipart/form-data" action="@Paths.UserProfile" accept-charset="UTF-8" method="post">
+      @MethodField("patch")@CsrfField(ctx.CsrfToken)
+      <label class="btn input--file">
+        @ImageTag("camera.svg", new Img(Size: 20, AriaHidden: true))
+        <input id="file" class="input" accept="image/*" data-upload-preview-target="input" data-action="upload-preview#previewImage change->form#submit" type="file" name="user[avatar]" />
+        <span class="for-screen-reader">Upload avatar</span>
+      </label>
+    </form>
+
+    <form data-controller="form" enctype="multipart/form-data" action="@Paths.UserProfile" accept-charset="UTF-8" method="post">
+      @MethodField("patch")@CsrfField(ctx.CsrfToken)
+      <label class="btn avatar input--file txt-xx-large">
+        @ImageTag(Paths.FreshUserAvatar(user), new Img(Size: 300, AriaHidden: true, Data: "data-upload-preview-target=\"image\""))
+        <input id="file" class="input" accept="image/*" data-upload-preview-target="input" data-action="upload-preview#previewImage change->form#submit" type="file" name="user[avatar]" />
+        <span class="for-screen-reader">Avatar</span>
+      </label>
+    </form>
+
+    @if (Model.HasAvatar)
+    {
+      @ButtonTo($"/users/{user.Id}/avatar", Campfire.Web.Views.Accounts.PeopleHelpers.IconContent("minus.svg", "Delete avatar"),
+          method: "delete", cssClass: "btn btn--negative txt-small avatar__delete-btn", csrfToken: ctx.CsrfToken)
+    }
+  </div>
+
+  <form data-controller="form" action="@Paths.UserProfile" accept-charset="UTF-8" method="post">
+    @MethodField("patch")@CsrfField(ctx.CsrfToken)
+    <div class="flex flex-column gap">
+      <div class="flex align-center gap">
+        @TranslationButton("user_name")
+
+        <label class="flex align-center gap flex-item-grow input input--actor">
+          <input class="input txt-large " autocomplete="name" placeholder="Enter your name" autofocus="autofocus" required="required" data-1p-ignore="true" type="text" value="@user.Name" name="user[name]" id="user_name" />
+          @ImageTag("person.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+        </label>
+      </div>
+
+      <div class="flex align-center gap">
+        @TranslationButton("email_address")
+
+        <label class="flex align-center gap flex-item-grow input input--actor">
+          <input class="input txt-large" value="@user.EmailAddress" autocomplete="username" placeholder="Enter your email address" type="email" name="user[email_address]" id="user_email_address" />
+          @ImageTag("email.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+        </label>
+      </div>
+
+      <div class="flex align-center gap">
+        @TranslationButton("update_password")
+
+        <label class="flex align-center gap flex-item-grow input input--actor">
+          <input class="input txt-large" autocomplete="new-password" placeholder="Change password" maxlength="72" type="password" name="user[password]" id="user_password" />
+          @ImageTag("password.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+        </label>
+      </div>
+
+      <div class="flex align-start gap">
+        @TranslationButton("bio")
+
+        <label class="flex align--center gap flex-item--grow input input--actor">
+          <textarea class="input txt-large" placeholder="A few words about yourself…" maxlength="200" rows="3" name="user[bio]" id="user_bio">
+@user.Bio</textarea>
+          @ImageTag("bio.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+        </label>
+      </div>
+
+      <button class="btn btn--reversed center txt-large" type="submit">
+        @ImageTag("check.svg", new Img(Size: 20, AriaHidden: true))
+        <span class="for-screen-reader">Save changes</span>
+      </button>
+    </div>
+  </form>
+
+  <div class="margin-block pad-inline pad-block fill-shade border-radius">
+    <menu class="flex flex-column gap margin-none pad">
+      @foreach (var membership in Model.SharedMemberships)
+      {
+        @(await RenderPartialAsync<MembershipItem, ProfileMembership>(membership))
+      }
+
+      @if (Model.DirectMemberships.Count > 0 && Model.SharedMemberships.Count > 0)
+      {
+        <hr class="separator full-width" style="--border-style: solid">
+      }
+
+      @foreach (var membership in Model.DirectMemberships)
+      {
+        @(await RenderPartialAsync<MembershipItem, ProfileMembership>(membership))
+      }
+    </menu>
+  </div>
+
+  @(await RenderPartialAsync<Transfer, TransferModel>(Model.Transfer))
+
+  @if (ctx.IsDevelopment)
+  {
+    <fieldset>
+      <legend>
+        @ImageTag("key.svg", new Img(Size: 36, AriaHidden: true, Class: "colorize--black"))
+      </legend>
+      <a class="btn txt-small center" href="@ctx.Url(Paths.UserPushSubscriptions)">Push Notifications Dev Mode</a>
+    </fieldset>
+  }
+</section>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: Model.User.Name);
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "nav")
+        {
+            <div class="flex-item-justify-start">
+              @Campfire.Web.Views.Accounts.PeopleHelpers.LinkBack(Model.Page)
+            </div>
+
+            <div class="flex-item-justify-end">
+              <form data-controller="sessions" action="@Paths.Session" accept-charset="UTF-8" method="post">
+                @MethodField("delete")@CsrfField(Model.Page.CsrfToken)
+                <input type="hidden" name="push_subscription_endpoint" id="push_subscription_endpoint" data-sessions-target="pushSubscriptionEndpoint" autocomplete="off" />
+
+                <button class="btn" data-action="sessions#logout:prevent">
+                  @ImageTag("logout.svg", new Img(AriaHidden: true))
+                  <span class="for-screen-reader">Log out</span>
+                </button>
+              </form>
+            </div>
+        }
+        return Task.CompletedTask;
+    }
+}

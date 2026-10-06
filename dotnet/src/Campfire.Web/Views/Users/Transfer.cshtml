@@ -1,0 +1,45 @@
+@inherits RazorSlice<TransferModel>
+@{
+    var url = Model.Url;
+    var qr = QrCodes.Path(url);
+}
+<fieldset>
+  <legend class="gap">
+    @ImageTag("laptop.svg", new Img(Size: 36, AriaHidden: true, Class: "colorize--black"))
+    @ImageTag("transfer.svg", new Img(Size: 36, AriaHidden: true, Class: "colorize--black"))
+    @ImageTag("mobile-phone.svg", new Img(Size: 36, AriaHidden: true, Class: "colorize--black"))
+  </legend>
+
+  <div class="flex flex-column gap">
+    @if (Model.ForSomeoneElse)
+    {
+      <div class="flex align-center gap justify-center">
+        @ImageTag("crown.svg", new Img(Size: 16, AriaHidden: true, Class: "flex-item-no-shrink colorize--black"))
+        <label for="session_transfer_url">Share to get them back into their account</label>
+      </div>
+    }
+    else
+    {
+      <label for="session_transfer_url" class="for-screen-reader">Use this link to login automatically on another device</label>
+    }
+
+    <input type="text" class="input" value="@url" id="session_transfer_url" readonly>
+
+    <div class="flex align-center center gap">
+      <a class="btn" data-lightbox-target="image" data-action="lightbox#open" data-lightbox-url-value="@qr" href="@qr">
+        <span class="for-screen-reader">Show auto-login QR code</span>
+        @ImageTag("qr-code.svg", new Img(Size: 20, AriaHidden: true, Class: "colorize--black"))
+      </a>
+
+      <button class="btn" data-controller="copy-to-clipboard" data-action="copy-to-clipboard#copy" data-copy-to-clipboard-success-class="btn--success" data-copy-to-clipboard-content-value="@url">
+        <span class="for-screen-reader">Copy auto-login link</span>
+        @ImageTag("copy-paste.svg", new Img(Size: 20, AriaHidden: true, Class: "flex-item-no-shrink colorize--black"))
+      </button>
+
+      <button class="btn" hidden="hidden" data-controller="web-share" data-action="web-share#share" data-web-share-url-value="@url" data-web-share-text-value="This is your own private sign-in URL, DO NOT SHARE IT. Use it to sign-in on another device or if you get locked out." data-web-share-title-value="Your sign-in link">
+        <span class="for-screen-reader">Share auto-login link</span>
+        @ImageTag("share.svg", new Img(Size: 20, AriaHidden: true, Class: "flex-item-no-shrink colorize--black"))
+      </button>
+    </div>
+  </div>
+</fieldset>

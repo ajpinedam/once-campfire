@@ -1,0 +1,38 @@
+@inherits RazorSlice<BotFormModel>
+@{
+    var bot = Model.Bot;
+    var image = bot is not null && Model.HasAvatar ? Paths.FreshUserAvatar(bot) : "default-bot-avatar.svg";
+}
+<h1 class="for-screen-reader">Chat Bot Setup</h1>
+<label class="align-center center avatar__form gap" data-controller="upload-preview">
+  <div class="btn input--file">
+    @ImageTag("camera.svg", new Img(Size: 20, AriaHidden: true))
+    <input class="input" accept="image/*" data-upload-preview-target="input" data-action="upload-preview#previewImage" type="file" name="user[avatar]" id="user_avatar" />
+    <span class="for-screen-reader">Upload bot avatar</span>
+  </div>
+
+  <div class="avatar input--file txt-xx-large" style="--avatar-size: var(--btn-size);">
+    @ImageTag(image, new Img(Alt: "Bot avatar", Size: 48, Data: "data-upload-preview-target=\"image\""))
+  </div>
+</label>
+
+<div class="flex align-center gap">
+  @TranslationButton("bot_name")
+  <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+    <input class="input" autocomplete="name" placeholder="Name the bot" autofocus="autofocus" required="required" data-1p-ignore="true" type="text" value="@bot?.Name" name="user[name]" id="user_name" />
+    @ImageTag("bot.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+  </label>
+</div>
+
+<div class="flex align-center gap">
+  @TranslationButton("webhook_url")
+  <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+    <input class="input" placeholder="Webhook URL" type="url" value="@Model.WebhookUrl" name="user[webhook_url]" id="user_webhook_url" />
+    @ImageTag("web.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+  </label>
+</div>
+
+<button class="btn btn--reversed center txt-large" type="submit">
+  @ImageTag("check.svg", new Img(Size: 20, AriaHidden: true))
+  <span class="for-screen-reader">Save changes</span>
+</button>

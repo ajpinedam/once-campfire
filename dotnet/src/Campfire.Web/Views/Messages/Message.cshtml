@@ -1,0 +1,36 @@
+@inherits RazorSlice<MessageView>
+@* messages/_message — cached and shared by every viewer: no per-user data, no CSRF fields.
+   Be sure to check/update Template.cshtml when changing this file. *@
+@{
+    var message = Model.Message;
+    var creator = Model.Creator;
+    var timestamp = Epoch(message.CreatedAt);
+}
+<div id="@DomId.For(message)" class="message @(Model.IsEmoji ? "message--emoji" : null)" data-controller="reply" data-user-id="@message.CreatorId" data-message-id="@message.Id" data-message-timestamp="@timestamp" data-message-updated-at="@Epoch(message.UpdatedAt)" data-sort-value="@timestamp" data-messages-target="message" data-search-results-target="message" data-refresh-room-target="message" data-reply-composer-outlet="#composer">
+  <h2 class="message__day-separator">@LocalDatetimeTag(message.CreatedAt, "date")</h2>
+
+  <figure class="avatar message__avatar">
+    @AvatarTag(creator)
+  </figure>
+
+  <turbo-frame id="@DomId.For(message, "edit")">
+    <div class="message__body">
+      <div class="message__body-content">
+        <div class="message__meta">
+          <h3 class="message__heading">
+            <span class="message__author" title="@creator.Title">
+              <strong data-reply-target="author">@creator.Name</strong>
+            </span>
+            <a target="_top" class="message__permalink" href="@Model.Permalink">@LocalDatetimeTag(message.CreatedAt, "time", "message__timestamp")</a>
+            <span class="message__room">
+              <a target="_top" data-reply-target="link" href="@Model.Permalink">@Model.RoomName</a>
+            </span>
+          </h3>
+          @(await RenderPartialAsync<Campfire.Web.Views.Messages.Actions, MessageView>(Model))
+        </div>
+        @(await RenderPartialAsync<Campfire.Web.Views.Messages.Presentation, PresentationView>(new PresentationView(message, Model.Presentation)))
+        @(await RenderPartialAsync<Campfire.Web.Views.Boosts.Boosts, BoostsView>(new BoostsView(message, Model.Boosts)))
+      </div>
+    </div>
+  </turbo-frame>
+</div>

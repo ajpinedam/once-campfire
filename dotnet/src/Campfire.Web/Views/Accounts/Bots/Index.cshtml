@@ -1,0 +1,42 @@
+@inherits RazorSlice<BotsIndexModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+<section class="panel panel--wide txt-align-center flex flex-column position-relative" style="view-transition-name: chat-bots">
+  <div class="flex align-center gap">
+    <div class="panel__button">
+      @TranslationButton("chat_bots")
+    </div>
+    <div class="pad-inline-double center">
+      <h1 class="margin-none">Chat bots</h1>
+      <p class="margin-none-block-start">With Chat bots, other sites and services can post updates directly to Campfire.</p>
+
+      <a class="btn btn--reversed txt-large" aria-label="Add a chat bot" href="@Paths.NewAccountBot">
+        @ImageTag("bot.svg", new Img(Size: 20, AriaHidden: true))
+        @ImageTag("add.svg", new Img(Size: 20, AriaHidden: true))
+      </a>
+    </div>
+  </div>
+
+  <div class="pad-inline pad-block-start ">
+    <menu class="flex flex-column gap margin-none pad">
+      @foreach (var bot in Model.Bots)
+      {
+        @(await RenderPartialAsync<Bot, BotEntry>(bot))
+      }
+    </menu>
+  </div>
+</section>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: "Chat bots");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "nav")
+        {
+            <div class="flex-item-justify-start">
+              @LinkBackTo(Paths.EditAccount)
+            </div>
+        }
+        return Task.CompletedTask;
+    }
+}

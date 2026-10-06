@@ -1,0 +1,183 @@
+@inherits RazorSlice<RoomFormModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@* rooms/opens|closeds new & edit (rooms/layouts/_new, _edit, _form + each type's form and user rows) *@
+@{
+    var room = Model.Room;
+    var ctx = Model.Page;
+    var currentUser = ctx.CurrentUser;
+    var isOpen = room.IsOpen;
+    var transitionName = Model.IsNew ? "new-room" : $"edit-room-{room.Id}";
+}
+<section class="panel txt-align-center" style="view-transition-name: @transitionName">
+  <form action="@Model.FormAction" accept-charset="UTF-8" method="post">
+    @if (!Model.IsNew)
+    {
+      @MethodField("patch")
+    }
+    @CsrfField(ctx.CsrfToken)
+
+    <div class="flex align-center gap">
+      @if (Model.CanAdminister)
+      {
+        @TranslationButton("room_name")
+
+        <label class="flex-item-grow txt-large">
+          <input name="room[name]" id="room_name" class="input full-width" required="required" autofocus="autofocus" placeholder="Name the room" data-turbo-permanent="true" data-action="keydown.enter->form#submit:prevent" type="text" value="@room.Name" />
+          <span class="for-screen-reader">Name this room</span>
+        </label>
+      }
+      else
+      {
+        <h1 class="flex-item-grow txt-x-large">
+          @room.Name
+        </h1>
+      }
+    </div>
+
+    <hr class="margin-block borderless">
+
+    <section class="room-access margin-block pad-inline fill-shade border-radius">
+      <menu class="flex flex-column gap margin-none pad overflow-y constrain-height" data-controller="filter" data-filter-active-class="filter--active" data-filter-selected-class="selected">
+        @if (isOpen || Model.CanAdminister)
+        {
+          <li class="flex align-center gap margin-none">
+            <figure class="avatar flex-item-no-shrink" style="--avatar-border-radius: 0; --avatar-size: 4ch;">
+              @ImageTag("everyone.svg", new Img(AriaHidden: true, Class: "colorize--black", Style: "background-color: transparent"))
+              <span class="for-screen-reader">Everyone</span>
+            </figure>
+
+            <div class="min-width">
+              <div class="overflow-ellipsis fill-shade"><strong>Everyone</strong></div>
+            </div>
+
+            <hr class="separator" aria-hidden="true">
+
+            @if (Model.CanAdminister)
+            {
+              <a class="btn--faux flex-inline" tabindex="-1" data-turbo-action="replace" href="@Model.TypeChangePath">
+                <label for="room_type" class="switch">
+                  @if (isOpen)
+                  {
+                    <input type="checkbox" id="room_type" class="switch__input" checked="checked">
+                    <span class="switch__btn round"></span>
+                    <span class="for-screen-reader">Give only some access to this room</span>
+                  }
+                  else
+                  {
+                    <input type="checkbox" id="room_type" class="switch__input">
+                    <span class="switch__btn round"></span>
+                    <span class="for-screen-reader">Give everyone access to this room</span>
+                  }
+                </label>
+              </a>
+            }
+          </li>
+
+          <hr class="separator full-width" style="--border-style: solid">
+        }
+
+        @if (Model.ShowFilter)
+        {
+          <input type="search" id="search" autocorrect="off" autocomplete="off" data-1p-ignore="true" class="input input--transparent full-width" placeholder="Filter…" data-action="input->filter#filter">
+        }
+
+        <div data-filter-target="list" contents>
+          @if (isOpen)
+          {
+            foreach (var user in Model.Users)
+            {
+              @UserRow(user, null)
+            }
+          }
+          else
+          {
+            foreach (var user in Model.SelectedUsers)
+            {
+              @UserRow(user, true)
+            }
+
+            if (Model.SelectedUsers.Count > 0 && Model.UnselectedUsers.Count > 0)
+            {
+              <hr class="separator full-width" style="--border-style: solid">
+            }
+
+            foreach (var user in Model.UnselectedUsers)
+            {
+              @UserRow(user, false)
+            }
+          }
+        </div>
+      </menu>
+    </section>
+
+    @if (Model.CanAdminister)
+    {
+      <button name="button" type="submit" class="btn btn--reversed txt-large center">
+        @ImageTag("check.svg", new Img(Size: 20, AriaHidden: true))
+        <span class="for-screen-reader">Save</span>
+      </button>
+    }
+  </form>
+</section>
+
+@if (!Model.IsNew && Model.CanAdminister)
+{
+  <section class="panel txt-align-center">
+    @ButtonTo(ctx.Url(Paths.Room(room.Id)),
+        Raw(ImageTag("trash.svg", new Img(Size: 20, AriaHidden: true)).Value + $"<span class=\"overflow-ellipsis\">{Escape(room.Name)}</span>"),
+        method: "delete", cssClass: "btn btn--negative max-width", csrfToken: ctx.CsrfToken, ariaLabel: $"Delete {room.Name}",
+        confirm: "Are you sure you want to delete this room and all messages in it? This can’t be undone.")
+  </section>
+}
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: Model.IsNew ? "New chat room" : $"Edit settings for {Model.Room.Name}");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "nav")
+        {
+            <div class="flex-item-justify-start">
+              @LinkBackTo(Model.BackPath)
+            </div>
+        }
+        return Task.CompletedTask;
+    }
+
+    // rooms/opens/_user and rooms/closeds/_user; selected is null for open rooms (everyone's in)
+    private IHtmlContent UserRow(User user, bool? selected)
+    {
+        <li class="flex align-center gap margin-none" data-value="@user.Name.ToLowerInvariant()">
+          <figure class="avatar flex-item-no-shrink" style="--avatar-size: 4ch;">
+            @AvatarTag(user, loading: "lazy")
+          </figure>
+
+          <div class="min-width">
+            <div class="overflow-ellipsis fill-shade"><strong>@user.Name</strong></div>
+          </div>
+
+          <hr class="separator" aria-hidden="true">
+
+          @if (Model.CanAdminister)
+          {
+            if (selected is null || (user.Id == Model.Page.CurrentUser.Id && Model.IsNew))
+            {
+              if (selected is not null)
+              {
+                <input type="hidden" name="user_ids[]" value="@user.Id" autocomplete="off" />
+              }
+              @ImageTag("check.svg", new Img(Size: 20, Class: "colorize--black flex-item-no-shrink", AriaHidden: true))
+            }
+            else
+            {
+              <label class="switch flex-item-no-shrink">
+                <input type="checkbox" name="user_ids[]" value="@user.Id" class="switch__input" checked="@(selected == true)" />
+                <span class="switch__btn round"></span>
+                <span class="for-screen-reader">Give @user.Name access to this room</span>
+              </label>
+            }
+          }
+        </li>
+        return HtmlString.Empty;
+    }
+}

@@ -1,0 +1,106 @@
+@inherits RazorSlice<UserShowModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@{
+    var ctx = Model.Page;
+    var user = Model.User;
+    var me = ctx.CurrentUser;
+}
+<section class="panel txt-align-center">
+  <div class="flex flex-column gap @(user.IsBanned ? "banned" : null)">
+    <div class="avatar txt-xx-large center" style="background: white">
+      @ImageTag(Paths.FreshUserAvatar(user), new Img(Alt: "Profile avatar", Class: "avatar"))
+    </div>
+
+    @if (user.IsBot)
+    {
+      <div class="pad-double--inline push--inline push--block-start">
+        @if (user.IsActive)
+        {
+          @ButtonTo(Paths.DirectRoomsWith(user.Id), ImageTag("messages.svg"), cssClass: "btn btn--primary full-width txt--large", csrfToken: ctx.CsrfToken)
+        }
+        else
+        {
+          <div>@user.Name is no longer on this account</div>
+        }
+      </div>
+    }
+    else if (!user.IsDeactivated)
+    {
+      <div class="flex flex-column gap" style="--row-gap: calc(var(--block-space) / 3)">
+        <h1 class="txt-x-large txt-tight-lines margin-none">@user.Name</h1>
+        @if (ctx.CanAdminister)
+        {
+          <div><a href="mailto:@user.EmailAddress">@user.EmailAddress</a></div>
+        }
+        <div>@user.Bio</div>
+      </div>
+
+      if (user.IsActive)
+      {
+        <div class="pad-inline-double margin-inline margin-block-start">
+          @ButtonTo(Paths.DirectRoomsWith(user.Id), ImageTag("messages.svg", new Img(AriaHidden: true, AriaLabel: $"Ping {user.Name}")),
+              cssClass: "btn btn--reversed full-width txt-large", csrfToken: ctx.CsrfToken)
+        </div>
+
+        if (Model.Transfer is { } transfer)
+        {
+          <hr class="margin-block-start borderless">
+
+          @(await RenderPartialAsync<Transfer, TransferModel>(transfer))
+        }
+      }
+
+      if (ctx.CanAdminister && me.Id != user.Id)
+      {
+        <div class="margin-block-start">
+          @if (user.IsActive)
+          {
+            @ButtonTo(Paths.UserBan(user.Id),
+                Raw(ImageTag("cancel.svg", new Img(AriaHidden: true, AriaLabel: $"Ban {user.Name}")).Value + $"<span>Ban {Escape(user.Name)}</span>"),
+                cssClass: "btn full-width", csrfToken: ctx.CsrfToken,
+                confirm: "Are you sure you want to ban this user? This will log them out, delete their messages, and block their IP addresses.")
+          }
+          else
+          {
+            @ButtonTo(Paths.UserBan(user.Id),
+                Raw(ImageTag("cancel.svg", new Img(AriaHidden: true, AriaLabel: $"Remove Ban {user.Name}")).Value + "<span>Remove ban</span>"),
+                method: "delete", cssClass: "btn btn--negative full-width", csrfToken: ctx.CsrfToken,
+                confirm: "Are you sure you want to remove the ban on this user?")
+          }
+        </div>
+      }
+    }
+    else
+    {
+      <div>
+        <h1 class="txt-x-large margin-none">@user.Name</h1>
+        <div>@user.Name is no longer on this account</div>
+      </div>
+    }
+  </div>
+</section>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: Model.User.Name);
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "nav")
+        {
+            <div class="flex-item-justify-start">
+              @Campfire.Web.Views.Accounts.PeopleHelpers.LinkBack(Model.Page)
+            </div>
+
+            <div class="flex align-center gap flex-item-justify-end">
+              @if (Model.Page.CurrentUser.Id == Model.User.Id)
+              {
+                <a class="btn" href="@Paths.UserProfile">
+                  @ImageTag("pencil.svg", new Img(AriaHidden: true))
+                  <span class="for-screen-reader">Edit my profile</span>
+                </a>
+              }
+            </div>
+        }
+        return Task.CompletedTask;
+    }
+}

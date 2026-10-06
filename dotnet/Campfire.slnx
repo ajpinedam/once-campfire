@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/bench/">
+    <Project Path="bench/Campfire.Bench/Campfire.Bench.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Campfire.Web/Campfire.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Campfire.Tests/Campfire.Tests.csproj" />
+  </Folder>
+</Solution>

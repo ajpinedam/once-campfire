@@ -1,0 +1,101 @@
+@inherits RazorSlice<SearchesModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@* searches/index *@
+<div id="message-area" class="message-area">
+  <div class="message-area--empty min-width center">
+    <figure class="center pad">
+      @ImageTag("search.svg", new Img(AriaHidden: true, Class: "colorize--black translucent"))
+    </figure>
+  </div>
+
+  <div id="search-results" class="messages searches__results" data-controller="search-results" data-search-results-target="messages" data-search-results-me-class="message--me" data-search-results-threaded-class="message--threaded" data-search-results-mentioned-class="message--mentioned" data-search-results-formatted-class="message--formatted">
+    @foreach (var fragment in Model.Messages)
+    {
+      WriteLiteral(fragment.AsSpan());
+    }
+  </div>
+</div>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: "Search", BodyClass: "sidebar searches");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        var ctx = Model.Page;
+
+        if (name == "nav")
+        {
+            if (Model.Query is { } query)
+            {
+                <div class="searches__query flex align-center gap pad-block-start-half">
+                  <div class="btn btn--reversed btn--faux align-center gap txt-nowrap">
+                    <span class="overflow-ellipsis">“@query”</span>
+                    <span class="flex-item-no-shrink">@Model.Messages.Count</span>
+                  </div>
+                </div>
+            }
+
+            <div class="searches__recents align-center gap pad-block-half overflow-y overflow-hide-scrollbar">
+              @RecentSearches()
+            </div>
+        }
+        else if (name == "sidebar")
+        {
+            <div class="rooms position-relative flex flex-column gap overflow-y overflow-hide-scrollbar">
+              @RecentSearches()
+            </div>
+        }
+        else if (name == "footer")
+        {
+            var returnTo = Model.ReturnToRoom is { } room ? Paths.Room(room.Id) : Paths.Root;
+
+            <div class="composer flex align-end gap">
+              <a class="btn flex-item-no-shrink margin-block-end" style="view-transition-name: input-switcher; --btn-border-radius: 0.5em" href="@returnTo">
+                @ImageTag("arrow-left.svg", new Img(AriaHidden: true))
+                <span class="for-screen-reader">Exit search </span>
+              </a>
+
+              <form class="margin-block flex-item-grow contain flex align-center gap" data-controller="form" data-action="keydown.esc->form#cancel" action="@Paths.Searches" accept-charset="UTF-8" method="post">
+                @CsrfField(ctx.CsrfToken)
+                <div class="composer__input flex align-center flex-item-grow gap full-width input input--actor min-width">
+                  @ImageTag("search.svg", new Img(Size: 20, AriaHidden: true, Class: "composer__input-hint colorize--black", Style: "view-transition-name: input-btn;"))
+
+                  <input value="@Model.QueryParam" class="searches__input input flex-item-grow" role="searchbox" aria-label="search" autofocus="autofocus" required="required" type="text" name="q" id="q" />
+
+                  <a data-form-target="cancel" role="button" class="searches__reset" href="@Paths.Searches">
+                    @ImageTag("remove.svg", new Img(Size: 14, AriaHidden: true, Class: "colorize--black"))
+                    <span class="for-screen-reader">Clear search field</span>
+                  </a>
+
+                  <button name="button" type="submit" class="btn btn--reversed flex-item-no-shrink txt-small" style="--btn-border-radius: 0.5em">
+                    @ImageTag("arrow-up.svg", new Img(AriaHidden: true))
+                    <span class="for-screen-reader">Search</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private IHtmlContent RecentSearches()
+    {
+        foreach (var search in Model.RecentSearches)
+        {
+            <a class="align-center gap room btn txt-nowrap" href="@Paths.SearchesFor(search.Query)">
+              <span class="overflow-ellipsis">“@search.Query”</span>
+            </a>
+        }
+
+        if (Model.RecentSearches.Count > 0)
+        {
+            @ButtonTo(Model.Page.Url(Paths.ClearSearches),
+                Raw(ImageTag("broom.svg", new Img(AriaHidden: true)).Value + "<span class=\"for-screen-reader\">Clear recent searches</span>"),
+                method: "delete", cssClass: "btn searches__btn", csrfToken: Model.Page.CsrfToken,
+                confirm: "Are you sure you want to clear your recent searches?")
+        }
+
+        return HtmlString.Empty;
+    }
+}

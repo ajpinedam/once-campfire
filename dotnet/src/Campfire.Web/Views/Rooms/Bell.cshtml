@@ -1,0 +1,42 @@
+@inherits RazorSlice<BellModel>
+@* rooms/involvements/_bell: loads the involvement toggle once notifications are ready *@
+@{
+    var room = Model.Room;
+}
+<span>
+  <span class="button_to_change_notifying"
+      data-controller="notifications" data-notifications-subscriptions-url-value="@Paths.UserPushSubscriptions" data-notifications-attention-class="btn--pulsing">
+    <turbo-frame id="@DomId.For(room, "involvement")" data-controller="turbo-frame" data-action="notifications:ready@window->turbo-frame#load" data-turbo-frame-url-param="@Paths.RoomInvolvement(room.Id)">
+      <button class="btn" data-action="click->notifications#attemptToSubscribe" data-notifications-target="bell">
+        @ImageTag("notification-bell-loading.svg", new Img(Size: 20, AriaHidden: true))
+        @ImageTag("notification-bell-alert.svg", new Img(Size: 20, AriaHidden: true, Hidden: true))
+        <span class="for-screen-reader">Notification settings for this @(room.IsDirect ? "Ping" : "room")</span>
+      </button>
+    </turbo-frame>
+
+    <dialog data-notifications-target="notAllowedNotice" class="dialog pad center center-block border-radius border shadow" style="--inline-space: var(--block-space)">
+      <div class="flex flex-column txt-align-center">
+        <span class="btn btn--faux center txt-x-large">
+          @ImageTag("notification-bell-alert.svg", new Img(Size: 48, AriaHidden: true))
+          <span class="for-screen-reader">Notifications alert</span>
+        </span>
+
+        <section>
+          <h1 class="txt-large margin-none">Notifications aren’t allowed</h1>
+          <div class="txt-align-start margin-block-start">
+            @(await RenderPartialAsync<Campfire.Web.Views.Pwa.BrowserSettings, PwaHelpModel>(Model.PwaHelp))
+            @(await RenderPartialAsync<Campfire.Web.Views.Pwa.SystemSettings, PwaHelpModel>(Model.PwaHelp))
+            @(await RenderPartialAsync<Campfire.Web.Views.Pwa.InstallInstructions, PwaHelpModel>(Model.PwaHelp))
+          </div>
+        </section>
+
+        <form method="dialog" class="flex align-center gap center">
+          <button class="btn dialog__close" autofocus="true">
+            <span class="for-screen-reader">Close</span>
+            @ImageTag("remove.svg", new Img(Size: 20, AriaHidden: true))
+          </button>
+        </form>
+      </div>
+    </dialog>
+  </span>
+</span>

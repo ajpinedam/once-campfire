@@ -1,0 +1,48 @@
+@inherits RazorSlice<Campfire.Web.Views.PushSubscriptions.PushSubscriptionsPage>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@* users/push_subscriptions/index *@
+
+<section class="panel panel--wide flex flex-column gap">
+  <h1 class="txt-align-center txt-large margin-none">Push Notification Subscriptions</h1>
+  <div class="pad-inline fill-shade border-radius" id="push_subscriptions">
+    <menu class="pad flex flex-column gap">
+      @foreach (var subscription in Model.Subscriptions)
+      {
+        <li class="flex flex-column margin-none membership-item">
+          <span class="overflow-ellipsis txt-primary txt-undecorated">
+            <strong>@Campfire.Web.Views.PushSubscriptions.PushSubscriptionsPage.DescribeAgent(subscription.UserAgent)</strong><br>
+          </span>
+
+          <span class="flex align-start gap txt-small">
+            <span>@subscription.Endpoint</span>
+
+            <span class="flex align-center gap">
+              @ButtonTo(Paths.UserPushSubscriptionTestNotifications(subscription.Id),
+                  Raw(ImageTag("notification-bell-everything.svg", new Img(Size: 20, AriaHidden: true)).Value + "<span class=\"for-screen-reader\">Send test notification</span>"),
+                  cssClass: "btn btn--reversed", csrfToken: Model.Page.CsrfToken)
+
+              @ButtonTo(Paths.UserPushSubscription(subscription.Id),
+                  Raw(ImageTag("minus.svg", new Img(Size: 20, AriaHidden: true)).Value + "<span class=\"for-screen-reader\">Delete subscription</span>"),
+                  method: "delete", cssClass: "btn btn--negative", csrfToken: Model.Page.CsrfToken)
+            </span>
+          </span>
+        </li>
+      }
+    </menu>
+  </div>
+</section>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: "Push notification subscriptions");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "nav")
+        {
+            <div class="flex-item-justify-start">
+              @LinkBackTo(Model.BackPath)
+            </div>
+        }
+        return Task.CompletedTask;
+    }
+}

@@ -1,0 +1,8 @@
+@inherits RazorSlice<SharedRoomView>
+@* users/sidebars/rooms/_shared — also broadcast to sidebars when rooms are created or renamed *@
+@{
+    var room = Model.Room;
+}
+<a style="--column-gap: 0.5em" class="align-center gap room btn txt-nowrap@(Model.Unread ? " unread" : null)" id="@DomId.For(room, "list")" data-rooms-list-target="room" data-room-id="@room.Id" data-badge-dot-target="unread" data-sorted-list-target="item" data-sorted-list-name="@room.Name" href="@Paths.Room(room.Id)">
+  <span class="overflow-ellipsis">@room.Name</span>
+</a>

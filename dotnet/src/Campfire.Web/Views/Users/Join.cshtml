@@ -1,0 +1,84 @@
+@inherits RazorSlice<JoinModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@{
+    var ctx = Model.Page;
+}
+<form class="center" enctype="multipart/form-data" action="@Paths.Join(Model.JoinCode)" accept-charset="UTF-8" method="post">
+  @CsrfField(ctx.CsrfToken)
+  <section class="nametag u-relative">
+    <div class="flex justify-center align-center pad-block">
+      @ImageTag("lanyard.svg", new Img(AriaHidden: true, Class: "nametag__lanyard"))
+    </div>
+
+    <div class="nametag__inner flex flex-column gap">
+      <fieldset class="flex flex-column center-block">
+        <legend class="txt-align-center flex gap">
+          @AccountLogoTag(ctx.Account)
+          <strong class="txt-large">@ctx.Account?.Name</strong>
+        </legend>
+
+        <label class="align-center center avatar__form gap" data-controller="upload-preview">
+          <div class="btn input--file">
+            @ImageTag("camera.svg", new Img(AriaHidden: true))
+            <input class="input" accept="image/*" data-upload-preview-target="input" data-action="upload-preview#previewImage" type="file" name="user[avatar]" id="user_avatar" />
+            <span class="for-screen-reader">Upload avatar</span>
+          </div>
+
+          <div class="btn avatar input--file txt-xx-large">
+            @ImageTag("default-avatar.svg", new Img(AriaHidden: true, Data: "data-upload-preview-target=\"image\""))
+            <span class="for-screen-reader">Avatar</span>
+          </div>
+        </label>
+      </fieldset>
+
+      <div class="flex align-center gap">
+        @TranslationButton("user_name")
+        <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+          <input class="input" autocomplete="name" placeholder="Name" autofocus="autofocus" required="required" data-1p-ignore="true" type="text" name="user[name]" id="user_name" />
+          @ImageTag("person.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+        </label>
+      </div>
+
+      <div class="flex align-center gap">
+        @TranslationButton("email_address")
+        <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+          <input class="input" autocomplete="username" placeholder="Email address" required="required" type="email" name="user[email_address]" id="user_email_address" />
+          @ImageTag("email.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+        </label>
+      </div>
+
+      <div class="flex align-center gap">
+        @TranslationButton("password")
+        <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+          <input class="input" autocomplete="new-password" placeholder="Password" required="required" maxlength="72" type="password" name="user[password]" id="user_password" />
+          @ImageTag("password.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+        </label>
+      </div>
+
+      <button class="btn btn--reversed center txt-large" type="submit">
+        @ImageTag("check.svg", new Img(AriaHidden: true))
+        <span class="for-screen-reader">Save</span>
+      </button>
+    </div>
+  </section>
+</form>
+
+@(await RenderPartialAsync<Campfire.Web.Views.Accounts.HelpContact, Campfire.Web.Views.Accounts.HelpContactModel>(new(Model.HelpContact, ctx.AppVersion)))
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: "Sign up", BodyClass: "signup");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "nav")
+        {
+            <div class="flex-item-justify-end">
+              <a class="btn flex-item-justify-end" href="@Paths.NewSession">
+                @ImageTag("login-keys.svg", new Img(AriaHidden: true))
+                <span class="for-screen-reader">Sign in</span>
+              </a>
+            </div>
+        }
+        return Task.CompletedTask;
+    }
+}

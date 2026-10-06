@@ -1,0 +1,143 @@
+@inherits RazorSlice<AccountEditModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@{
+    var ctx = Model.Page;
+    var account = Model.Account;
+    var logo = Paths.FreshAccountLogo(account);
+}
+<section class="panel txt-align-center flex flex-column gap" style="view-transition-name: account-settings">
+  @if (ctx.CanAdminister)
+  {
+    <div class="align-center center avatar__form gap" data-controller="upload-preview">
+      <form class="txt--medium" data-controller="form" enctype="multipart/form-data" action="@Paths.Account" accept-charset="UTF-8" method="post">
+        @MethodField("patch")@CsrfField(ctx.CsrfToken)
+        <label class="btn input--file">
+          @ImageTag("camera.svg", new Img(Size: 20, AriaHidden: true))
+          <input class="input" accept="image/*" data-action="upload-preview#previewImage change->form#submit" type="file" name="account[logo]" id="account_logo" />
+          <span class="for-screen-reader">Upload logo</span>
+        </label>
+      </form>
+
+      <form data-controller="form" enctype="multipart/form-data" action="@Paths.Account" accept-charset="UTF-8" method="post">
+        @MethodField("patch")@CsrfField(ctx.CsrfToken)
+        <label class="btn avatar input--file account-logo txt-xx-large">
+          @ImageTag(logo, new Img(Role: "presentation", Size: 48, Data: "data-upload-preview-target=\"image\""))
+          <input class="input" accept="image/*" data-action="upload-preview#previewImage change->form#submit" type="file" name="account[logo]" id="account_logo" />
+          <span class="for-screen-reader">Upload logo</span>
+        </label>
+      </form>
+
+      @if (account.HasLogo)
+      {
+        @ButtonTo(logo, PeopleHelpers.IconContent("minus.svg", "Delete logo"), method: "delete",
+            cssClass: "btn btn--negative txt-small avatar__delete-btn", csrfToken: ctx.CsrfToken)
+      }
+    </div>
+
+    <form data-controller="form" class="flex flex-column gap" action="@Paths.Account" accept-charset="UTF-8" method="post">
+      @MethodField("patch")@CsrfField(ctx.CsrfToken)
+      <div class="flex align-center gap">
+        @TranslationButton("account_name")
+
+        <label class="flex align-center gap flex-item-grow">
+          <input class="input txt-large" autocomplete="off" placeholder="Name this account" autofocus="autofocus" data-action="keydown.enter->form#submit" type="text" value="@account.Name" name="account[name]" id="account_name" />
+        </label>
+
+        <button class="btn btn--reversed center" type="submit">
+          @ImageTag("check.svg", new Img(Size: 20, AriaHidden: true))
+          <span class="for-screen-reader">Save changes</span>
+        </button>
+      </div>
+    </form>
+
+    <div class="margin-block-start pad-block pad-inline-double fill-shade border-radius">
+      <form data-controller="form" class="flex align-center gap center" action="@Paths.Account" accept-charset="UTF-8" method="post">
+        @MethodField("put")@CsrfField(ctx.CsrfToken)
+        <div class="flex-item-grow flex align-center gap txt-align-start">
+          @ImageTag("crown.svg", new Img(Size: 18, AriaHidden: true, Class: "colorize--black")) Must be admin to create new rooms
+        </div>
+        <input value="@(account.Settings.RestrictRoomCreationToAdministrators ? "false" : "true")" autocomplete="off" type="hidden" name="account[settings][restrict_room_creation_to_administrators]" id="account_settings_restrict_room_creation_to_administrators" />
+
+        <label class="switch">
+          <input type="checkbox"
+                class="switch__input"
+                checked="@account.Settings.RestrictRoomCreationToAdministrators"
+                data-action="change->form#submit">
+          <span class="switch__btn round"></span>
+          <span class="for-screen-reader">
+            Must be admin to create new rooms
+          </span>
+        </label>
+      </form>
+    </div>
+  }
+  else
+  {
+    @AccountLogoTag(account, "txt-xx-large center")
+    <h1 class="flex-item-grow txt-x-large">@account.Name</h1>
+  }
+
+  <div class="margin-block pad-inline pad-block-start fill-shade border-radius">
+    @(await RenderPartialAsync<Campfire.Web.Views.Shared.Invite, InviteModel>(new(ctx)))
+
+    <hr class="margin-block separator full-width" style="--border-style: solid">
+
+    <menu class="flex flex-column gap margin-none pad">
+      <turbo-frame id="account_users">
+        @foreach (var user in Model.Administrators)
+        {
+          @(await RenderPartialAsync<UserItem, AccountUserModel>(new(ctx, user)))
+        }
+
+        @if (Model.Administrators.Count > 0 && Model.Members.Count > 0)
+        {
+          <hr class="separator full-width" style="--border-style: solid">
+        }
+
+        @foreach (var user in Model.Members)
+        {
+          @(await RenderPartialAsync<UserItem, AccountUserModel>(new(ctx, user)))
+        }
+        @if (Model.NextPage is { } next)
+        {
+          @PeopleHelpers.NextPageContainer(next)
+        }
+      </turbo-frame>
+    </menu>
+  </div>
+</section>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: "Account settings");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "nav")
+        {
+            <div class="flex-item-justify-start">
+              @LinkBackTo(Model.BackPath)
+            </div>
+
+            if (Model.Page.IsAdministrator)
+            {
+              <div class="flex align-center gap flex-item-justify-end">
+                <a class="btn" style="view-transition-name: chat-bots" href="@Paths.AccountBots">
+                  @ImageTag("bot.svg", new Img(Size: 20, AriaHidden: true))
+                  <span class="for-screen-reader">Set up chat bots</span>
+                </a>
+
+                <a class="btn" style="view-transition-name: custom-styles" href="@Paths.EditAccountCustomStyles">
+                  @ImageTag("art.svg", new Img(Size: 20, AriaHidden: true))
+                  <span class="for-screen-reader">Custom styles</span>
+                </a>
+              </div>
+            }
+        }
+        else if (name == "footer")
+        {
+            <div class="txt-align-center center margin-block-double txt-subtle">Campfire&trade; version @PeopleHelpers.VersionBadge(Model.Page.AppVersion)</div>
+        }
+
+        return Task.CompletedTask;
+    }
+}

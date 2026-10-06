@@ -1,0 +1,8 @@
+@inherits RazorSlice<FramePageModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@* A Turbo Frame response requested as a full page: the frame inside the application layout *@
+@(await RenderPartialAsync(Model.Frame))
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Model.Title);
+}

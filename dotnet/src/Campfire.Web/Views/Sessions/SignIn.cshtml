@@ -1,0 +1,54 @@
+@inherits RazorSlice<SignInModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@{
+    var ctx = Model.Page;
+}
+<section class="txt-align-center">
+  <div class="panel @(ctx.Flash?.IsAlert == true ? "shake" : null)">
+    @AccountLogoTag(ctx.Account, "center margin-block-end txt-xx-large")
+
+    <form class="flex flex-column gap" action="@Paths.Session" accept-charset="UTF-8" method="post">
+      @CsrfField(ctx.CsrfToken)
+      <fieldset class="flex flex-column gap center-block upad">
+        <legend class="txt-large txt-align-center"><strong>@ctx.Account?.Name</strong></legend>
+
+        <div class="flex align-center gap">
+          @TranslationButton("email_address")
+          <label class="flex align-center gap input input--actor txt-large">
+            <input required="required" class="input" autofocus="autofocus" autocomplete="username" placeholder="Enter your email address" value="@Model.EmailAddress" type="email" name="email_address" id="email_address" />
+            @ImageTag("email.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+          </label>
+        </div>
+
+        <div class="flex align-center gap">
+          @TranslationButton("password")
+          <label class="flex align-center gap input input--actor txt-large">
+            <input required="required" class="input" autocomplete="current-password" placeholder="Enter your password" maxlength="72" type="password" name="password" id="password" />
+            @ImageTag("password.svg", new Img(Size: 24, AriaHidden: true, Class: "colorize--black"))
+          </label>
+        </div>
+
+        <button name="log_in" type="submit" class="btn btn--reversed center txt-large">
+          @ImageTag("arrow-right.svg", new Img(AriaHidden: true))
+          <span class="for-screen-reader">Go</span>
+        </button>
+      </fieldset>
+    </form>
+  </div>
+
+  @(await RenderPartialAsync<Campfire.Web.Views.Accounts.HelpContact, Campfire.Web.Views.Accounts.HelpContactModel>(new(Model.HelpContact, ctx.AppVersion)))
+</section>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: "Sign in");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "head")
+        {
+            // turbo_page_requires_reload
+            <meta name="turbo-visit-control" content="reload">
+        }
+        return Task.CompletedTask;
+    }
+}

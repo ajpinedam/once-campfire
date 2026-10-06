@@ -1,0 +1,12 @@
+@inherits RazorSlice<HelpContactModel>
+@if (Model.Owner is { } owner)
+{
+  <div class="txt-align-center margin-block-double full-width">
+    <a class="btn center" title="Email @owner.Name" href="@($"mailto:\"{owner.Name}\" <{owner.EmailAddress}>")">
+      @ImageTag("lifebuoy.svg", new Img(AriaHidden: true))
+      <span>@owner.EmailAddress</span>
+    </a>
+
+    <div class="txt-align-center center margin-block txt-subtle">Campfire&trade; version @PeopleHelpers.VersionBadge(Model.AppVersion)</div>
+  </div>
+}

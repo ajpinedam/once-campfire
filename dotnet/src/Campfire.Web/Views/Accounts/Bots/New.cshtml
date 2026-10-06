@@ -1,0 +1,23 @@
+@inherits RazorSlice<BotFormModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+<section class="panel">
+  <form class="flex flex-column gap" enctype="multipart/form-data" action="@Paths.AccountBots" accept-charset="UTF-8" method="post">
+    @CsrfField(Model.Page.CsrfToken)
+    @(await RenderPartialAsync<Form, BotFormModel>(Model))
+  </form>
+</section>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: "New chat bot");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "nav")
+        {
+            <div class="flex-item-justify-start">
+              @LinkBackTo(Paths.AccountBots)
+            </div>
+        }
+        return Task.CompletedTask;
+    }
+}

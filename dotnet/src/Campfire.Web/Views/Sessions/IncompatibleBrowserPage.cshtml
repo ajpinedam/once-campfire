@@ -1,0 +1,35 @@
+@inherits RazorSlice<IncompatibleBrowserModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+<div class="panel center">
+  <header>
+    <h1 class="txt-x-large txt-tight-lines txt-align-center margin-none-block-start margin-block-end">
+      Upgrade to a supported web browser
+    </h1>
+    <div class="flex align-start gap">
+      @TranslationButton("incompatible_browser_messsage")
+      <p class="margin-none-block-start">Campfire requires a modern web browser. Please use one of the browsers listed below and make sure auto-updates are enabled.</p>
+    </div>
+  </header>
+
+  <div class="browser-list flex align-center flex-wrap gap justify-center margin-block">
+    @foreach (var (key, name, minimum) in Campfire.Web.Platform.ApplicationPlatform.SupportedBrowsers)
+    {
+      if (minimum is null)
+      {
+        continue;
+      }
+
+      <div class="browser flex flex-column">
+        @ImageTag($"browsers/{key}.svg", new Img(AriaHidden: true, Class: "center"))
+        <div class="flex flex-column align-center margin-block-start-half">
+          <strong>@name</strong>
+          <span> @(minimum.Minor == 0 ? minimum.Major.ToString(CultureInfo.InvariantCulture) : minimum.ToString(2))+</span>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: Model.Page.Platform.IsAppleMessages ? "Campfire" : "Unsupported browser");
+}

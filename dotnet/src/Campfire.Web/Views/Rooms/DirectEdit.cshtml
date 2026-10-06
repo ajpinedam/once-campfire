@@ -1,0 +1,37 @@
+@inherits RazorSlice<DirectEditModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+@* rooms/directs/edit *@
+<div class="panel txt-align-center">
+  <section class="directs--edit margin-block-end">
+    @foreach (var user in Model.Users)
+    {
+      <div class="member flex flex-column gap fill-shade pad border-radius">
+        <figure class="avatar center" style="--avatar-border-radius: 10ch; --avatar-size: 10ch;" >
+          @AvatarTag(user, loading: "lazy")
+        </figure>
+
+        <strong>@user.Name</strong>
+      </div>
+    }
+  </section>
+
+  @ButtonTo(Model.Page.Url(Paths.DirectRoom(Model.Room.Id)),
+      Raw(ImageTag("trash.svg", new Img(AriaHidden: true)).Value + "\n    Ping"),
+      method: "delete", cssClass: "btn btn--negative center", csrfToken: Model.Page.CsrfToken, ariaLabel: "Delete Ping",
+      confirm: "Are you sure you want to delete this ping and all messages in it? This can’t be undone.")
+</div>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page, Title: $"Edit settings for {Model.DisplayName}");
+
+    protected override Task ExecuteSectionAsync(string name)
+    {
+        if (name == "nav")
+        {
+            <div class="flex-item-justify-start">
+              @LinkBackTo(Model.BackPath)
+            </div>
+        }
+        return Task.CompletedTask;
+    }
+}

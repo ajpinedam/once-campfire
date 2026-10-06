@@ -1,0 +1,21 @@
+@inherits RazorSlice<OsNotificationStepsModel>
+@* The "turn on notifications for <browser>" steps repeated in pwa/_browser_settings for each desktop browser *@
+@{
+    var switchImage = ImageTag("external/switch.svg", new Img(Alt: Model.SwitchAlt, Size: 22));
+}
+<ol>
+  @if (Model.Platform.IsWindows)
+  {
+    <li>Click <em>Start</em>, then <em>Settings</em>.</li>
+    <li>Go to <em>System &gt; Notification</em>.</li>
+    <li>Click <em>@switchImage</em> <em>ON</em> for @Model.Browser.</li>
+  }
+  else
+  {
+    <li>Click <em aria-label="the Apple menu"></em> in the top left.</li>
+    <li>Click <em>System Settings…</em>.</li>
+    <li>Click <em>Notifications</em>.</li>
+    <li>Click <em>@Model.Browser</em>.</li>
+    <li>Click <em>@ImageTag("external/switch.svg", new Img(Alt: "the switch", Size: 22))</em> to <em>Allow notifications</em>.</li>
+  }
+</ol>

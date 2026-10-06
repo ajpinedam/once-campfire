@@ -1,0 +1,5 @@
+@inherits RazorSlice<InvolvementModel>
+@* rooms/involvements/show — the bell button inside its turbo frame *@
+<turbo-frame id="@DomId.For(Model.Room, "involvement")" data-controller="turbo-frame" data-action="notifications:ready@window->turbo-frame#load" data-turbo-frame-url-param="@Paths.RoomInvolvement(Model.Room.Id)">
+  @Involvements.ButtonToChange(Model.Room, Model.Involvement, Model.Page.CsrfToken)
+</turbo-frame>

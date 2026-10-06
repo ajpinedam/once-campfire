@@ -1,0 +1,46 @@
+@inherits RazorSlice<AccountUserModel>
+@{
+    var user = Model.User;
+    var me = Model.Page.CurrentUser;
+    var roleId = DomId.For(user, "role");
+}
+<li class="flex align-center gap margin-none @(user.IsBanned ? "banned" : null)">
+  <figure class="avatar flex-item-no-shrink" style="--avatar-size: 3.75ch;">
+    @AvatarTag(user, loading: "lazy")
+  </figure>
+
+  <div class="min-width">
+    <div class="overflow-ellipsis fill-shade"><strong>@user.Name</strong></div>
+  </div>
+
+  <hr class="separator" aria-hidden="true">
+
+  @if (Model.Page.CanAdminister && user.IsActive)
+  {
+    if (!user.IsBot)
+    {
+      <form data-controller="form" action="@Paths.AccountUser(user.Id)" accept-charset="UTF-8" method="post">
+        @MethodField("patch")@CsrfField(Model.Page.CsrfToken)
+        <label class="btn txt-small flex-item-no-shrink" for="@roleId">
+          <span class="for-screen-reader">Role: @(user.IsAdministrator ? "Administrator" : "Member")</span>
+          @ImageTag("crown.svg", new Img(Size: 20, AriaHidden: true))
+          <input name="user[role]" disabled="@(user.Id == me.Id)" type="hidden" value="member" autocomplete="off" /><input data-action="form#submit" hidden="hidden" id="@roleId" disabled="@(user.Id == me.Id)" type="checkbox" value="administrator" checked="@user.IsAdministrator" name="user[role]" />
+        </label>
+      </form>
+    }
+
+    if (user.Id != me.Id)
+    {
+      @ButtonTo(Paths.AccountUser(user.Id), PeopleHelpers.IconContent("minus.svg", $"Delete {user.Name}"),
+          method: "delete", cssClass: "btn txt-small flex-item-no-shrink btn--negative", csrfToken: Model.Page.CsrfToken,
+          confirm: "Are you sure you want to permanently remove this person from the account? This can’t be undone.")
+    }
+  }
+  @if (user.Id == me.Id)
+  {
+    <a class="btn txt-small flex-item-no-shrink" target="_top" href="@Paths.UserProfile">
+      @ImageTag("pencil.svg", new Img(Size: 20, AriaHidden: true))
+      <span class="for-screen-reader">My settings</span>
+    </a>
+  }
+</li>

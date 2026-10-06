@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>Campfire.Web</RootNamespace>
+    <AssemblyName>Campfire.Web</AssemblyName>
+    <UserSecretsId>campfire-dotnet</UserSecretsId>
+    <!-- Razor Slices: only templates under Views/ are slices; proxies are generated as sealed records -->
+    <EnableDefaultRazorSlices>false</EnableDefaultRazorSlices>
+    <RazorSliceProxiesAsRecords>true</RazorSliceProxiesAsRecords>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <RazorSlice Include="Views\**\*.cshtml" Exclude="Views\**\_ViewImports.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Campfire.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="1.8.3" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <PackageReference Include="HtmlSanitizer" Version="9.2.1039" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <PackageReference Include="NetVips" Version="3.2.0" />
+    <PackageReference Include="NetVips.Native" Version="8.18.7" />
+    <PackageReference Include="QRCoder" Version="1.8.0" />
+    <PackageReference Include="RazorSlices" Version="0.12.1" />
+  </ItemGroup>
+
+</Project>

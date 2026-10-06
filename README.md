@@ -64,6 +64,40 @@ Campfire also has implementations in Django, Laravel, Express, Elixir, Go and Ru
 Measured with 16 concurrent clients on an AMD Ryzen AI MAX+ 395,
 with four hardware threads allocated to each app.
 
+### .NET
+
+A .NET 10 port lives in [`dotnet/`](dotnet/README.md): ASP.NET Core minimal APIs, RazorSlices
+views, hand-written SQL over the unchanged Rails schema, and the same frontend served byte for byte.
+It was measured against this Rails app side by side on one machine (AMD Ryzen 7 5800XT) with
+[`dotnet/bench/compare`](dotnet/bench/compare/README.md), which follows `bench/compare_http.rb`:
+each app in its own container on four hardware threads, the load generator on four others,
+16 keep-alive clients, one Rails-built seed copied fresh for every run.
+
+| HTTP workload (requests/sec) | Rails, 1 worker | Rails, 4 workers | .NET | .NET ÷ Rails (4 workers) |
+|---|---:|---:|---:|---:|
+| Room page | 81 | 252 | 5,958 | 23.6× |
+| Messages page | 158 | 424 | 8,000 | 18.9× |
+| Sidebar | 131 | 438 | 8,731 | 19.9× |
+| Search | 83 | 259 | 5,170 | 20.0× |
+| Post a message | 105 | 253 | 4,395 | 17.4× |
+
+Different hardware and seed from the table above, so compare ratios rather than numbers. Against
+the ratios to Rails above (Go: 16×, 13.5×, 36×, 16×, 17.5×), .NET sits at or above Go on page
+rendering and search, level with it on posting and behind it on the sidebar.
+
+Findings along the way:
+
+- **Puma workers matter.** `bench/compare_http.rb` runs one Puma worker, which Ruby's GVL keeps to
+  about one core. Four workers (one per allocated thread) roughly triple Rails' throughput and land
+  close to the Rails figures in the table above.
+- **The Ruby load client saturates first** against faster servers: it measured about 1,200 req/s on
+  the room page where the .NET server sustains about 6,000. The figures above use a compiled client.
+- **SQLite was the bottleneck, not .NET.** Profiling showed statement preparation costing a third of
+  a read request and posts queuing on SQLite's single writer; cached prepared statements and group
+  commit took posting from 1,557 to 4,395 req/s.
+- **Mention highlighting never matches.** `message_formatter.js` looks for
+  `.mention img[src^="/users/{id}/avatar"]`, but avatar URLs carry a signed token instead of the id.
+
 ## Development
 
 You are welcome - and encouraged - to modify Campfire to your liking.

@@ -1,0 +1,16 @@
+@inherits RazorSlice<List<PromptItem>>
+@* autocompletable/users/index.html: <lexxy-prompt-item> elements for the editor's mentions prompt *@
+@foreach (var item in Model)
+{
+  <lexxy-prompt-item search="@item.User.Name" sgid="@item.Sgid">
+    <template type="menu">
+      <span class="autocomplete__item flex align-center gap unpad">
+        @AvatarTag(item.User)
+        <span class="autocompletable__name">@item.User.Name</span>
+      </span>
+    </template>
+    <template type="editor">
+      @Raw(item.MentionHtml)
+    </template>
+  </lexxy-prompt-item>
+}

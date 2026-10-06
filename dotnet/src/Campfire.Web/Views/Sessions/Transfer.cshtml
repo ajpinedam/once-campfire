@@ -1,0 +1,7 @@
+@inherits RazorSlice<TransferShowModel>
+@implements IUsesLayout<Campfire.Web.Views.Layouts.Application, LayoutModel>
+<form data-controller="auto-submit" action="@Model.Action" accept-charset="UTF-8" method="post">@MethodField("put")@CsrfField(Model.Page.CsrfToken)</form>
+
+@functions {
+    public LayoutModel LayoutModel => new(Model.Page);
+}

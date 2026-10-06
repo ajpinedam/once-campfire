@@ -1,0 +1,32 @@
+@inherits RazorSlice<DirectRoomView>
+@* users/sidebars/rooms/_direct — rendered per member (the label names the other participants) *@
+@{
+    var room = Model.Room;
+    var members = Model.Members;
+}
+<a class="direct@(Model.Unread ? " unread" : null)" id="@DomId.For(room, "list")" data-rooms-list-target="room" data-room-id="@room.Id" data-badge-dot-target="unread" data-sorted-list-target="item" data-sorted-list-number="@Epoch(room.UpdatedAt)" href="@Paths.Room(room.Id)">
+  @if (members.Count > 1)
+  {
+    <div class="avatar__group">
+      @foreach (var member in members.Take(4))
+      {
+        <span class="avatar">
+          @ImageTag(Paths.FreshUserAvatar(member), new Img(Size: 20, AriaHidden: true))
+        </span>
+      }
+    </div>
+  }
+  else if (members.Count == 1)
+  {
+    <span class="avatar">
+      @ImageTag(Paths.FreshUserAvatar(members[0]), new Img(Size: 48, AriaHidden: true))
+    </span>
+  }
+
+  <span class="direct__author flex align-center gap max-width min-width border-radius txt-small">
+    <span class="txt-nowrap overflow-ellipsis">
+      <span class="for-screen-reader">Ping with</span>
+      @Model.Label
+    </span>
+  </span>
+</a>
